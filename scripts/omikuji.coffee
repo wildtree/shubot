@@ -1,9 +1,9 @@
 #
 # Description:
-#	Omikuji handler for ingress-shonan team
+#       Omikuji handler for ingress-shonan team
 #
 # Notes:
-#	This is a simple omikuji handler for ingress-shonan team
+#       This is a simple omikuji handler for ingress-shonan team
 #
 
 omikuji = [
@@ -22,12 +22,13 @@ module.exports = (robot) ->
     now = new Date()
     ds = "#{now.getFullYear()}/#{now.getMonth()+1}/#{now.getDate()}"
     robot.hear /今日の運勢/, (msg) ->
-        key = "#{ds}:#{msg.user}"
+        user = msg.message.user.name
+        key = "#{ds}:#{user}"
         if key of omikuji_memo
-            msg.send msg.user + "さん、おみくじは一日一回まででお願いします。"
-            msg.send msg.user + "さんの今日の運勢は" + omikuji_memo[key] + "でした。"
+            msg.send user + "さん、おみくじは一日一回まででお願いします。"
+            msg.send user + "さんの今日(" + ds + ")の運勢は" + omikuji_memo[key] + "でした。"
         else
             result  = msg.random omikuji
-            msg.send msg.user + "さんの運勢 " + result
+            msg.send user + "さんの運勢 " + result
             omikuji_memo[key] = result
         

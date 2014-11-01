@@ -26,7 +26,7 @@ module.exports = (robot) ->
         key = "#{ds}:#{user}"
         if key of omikuji_memo
             msg.send user + "さん、おみくじは一日一回まででお願いします。"
-            msg.send user + "さんの今日(" + ds + ")の運勢は" + omikuji_memo[key] + "でした。"
+            msg.send user + "さんの今日(" + ds + ")の運勢は\n" + omikuji_memo[key] + "\nでした。"
         else
             result  = msg.random omikuji
             msg.send user + "さんの運勢 " + result

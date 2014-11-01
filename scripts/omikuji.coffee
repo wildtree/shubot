@@ -19,6 +19,7 @@ omikuji = [
 
 module.exports = (robot) ->
     omikuji_memo = robot.brain.get('omikuji') or {}
+    robot.brain.setAutoSave true
     now = new Date()
     ds = "#{now.getFullYear()}/#{now.getMonth()+1}/#{now.getDate()}"
     robot.hear /今日の運勢/, (msg) ->
@@ -31,4 +32,8 @@ module.exports = (robot) ->
             result  = msg.random omikuji
             msg.send user + "さんの運勢 " + result
             omikuji_memo[key] = result
-        
+            robot.brain.set 'omikuji', omikuji_memo
+            robot.brain.save
+
+#    robot.respond /test/i, (msg) ->
+#        console.log robot.brain        

@@ -26,11 +26,11 @@ module.exports = (robot) ->
         user = msg.message.user.name
         key = "#{ds}:#{user}"
         if key of omikuji_memo
-            msg.send '@' + user + " さん、おみくじは一日一回まででお願いします。"
-            msg.send '@' + user + " さんの今日(" + ds + ")の運勢は\n" + omikuji_memo[key] + "\nでした。"
+            msg.reply " さん、おみくじは一日一回まででお願いします。"
+            msg.reply " さんの今日(" + ds + ")の運勢は\n" + omikuji_memo[key] + "\nでした。"
         else
             result  = msg.random omikuji
-            msg.send '@' + user + " さんの運勢 " + result
+            msg.reply " さんの運勢 " + result
             omikuji_memo[key] = result
             robot.brain.set 'omikuji', omikuji_memo
             robot.brain.save

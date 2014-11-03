@@ -40,7 +40,7 @@ module.exports = (robot) ->
         else
             result  = msg.random omikuji_tbl
             msg.reply " さんの運勢 " + result.word
-            omikuji_memo[key] = result
+            omikuji_memo[key] = result.word
             robot.brain.set 'omikuji', omikuji_memo
             robot.brain.save
 

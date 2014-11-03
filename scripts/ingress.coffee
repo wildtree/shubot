@@ -2,6 +2,9 @@
 #   Ingress related information supply
 #
 # Notes:
+# Commands:
+#   hubot contact - give an URI for reporting to NIA
+#   hubot IRT - give an URI of Ingress Resistance Tokyo
 
 module.exports = (robot) ->
     robot.respond /(contact|通報先)/i, (msg) ->

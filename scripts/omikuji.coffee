@@ -5,6 +5,11 @@
 # Notes:
 #       This is a simple omikuji handler for ingress-shonan team
 #
+# Commands:
+#   hubot omikuji add <words> - add a words as omikuji reply
+#   hubot omikuji del <num> - delete a words from omikuji list
+#   hubot omikuji dump - show omikuji list
+#
 
 omikuji = [
     'つ[大吉]'

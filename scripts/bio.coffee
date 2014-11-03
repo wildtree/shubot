@@ -2,6 +2,9 @@
 # Description:
 #    Biorythm generator
 #
+# Commands:
+#   hubot bio <birthday> - give a biorythm entry of the day.
+#
 
 module.exports = (robot) ->
     class Bio

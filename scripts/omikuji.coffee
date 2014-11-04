@@ -30,13 +30,22 @@ for e in omikuji
     omikuji_tbl.push({word: e, owner: 'system', time: system_time })
 
 module.exports = (robot) ->
-    omikuji_memo = robot.brain.get('omikuji') or {}
-    robot.brain.setAutoSave true
-    now = new Date()
-    ds = "#{now.getFullYear()}/#{now.getMonth()+1}/#{now.getDate()}"
-    if '_list_' of omikuji_memo
-        omikuji_tbl = omikuji_memo['_list_']
+    get_ds = ->
+        now = new Date()
+        y = ('0000' + now.getFullYear().toString()).substr(-4, 4)
+        m = ('00' + (now.getMonth() + 1).toString()).substr(-2, 2)
+        d = ('00' + now.getDate().toString()).substr(-2, 2)
+        return "#{y}-#{m}-#{d}"
+
+    load_from_brain = ->
+        omikuji_memo = robot.brain.get('omikuji') or {}
+        if '_list_' of omikuji_memo
+            omikuji_tbl = omikuji_memo['_list_']
+        return omikuji_memo
+
     robot.hear /今日の運勢/, (msg) ->
+        omikuji_memo = load_from_brain()
+        ds = get_ds()
         user = msg.message.user.name
         key = "#{ds}:#{user}"
         if key of omikuji_memo
@@ -50,6 +59,7 @@ module.exports = (robot) ->
             robot.brain.save
 
     robot.respond /omikuji\s+add\s+(.*)$/i, (msg) ->
+        omikuji_memo = load_from_brain()
         e = msg.match[1]
         found = null
         for h in omikuji_tbl
@@ -63,6 +73,7 @@ module.exports = (robot) ->
             msg.send "\"#{found.word}\" は定義済みです。"
 
     robot.respond /omikuji\s+dump/i, (msg) ->
+        omikuji_memo = load_from_brain()
         s = "おみくじ候補:\n"
         i = 0
         for h in omikuji_tbl
@@ -73,6 +84,7 @@ module.exports = (robot) ->
         msg.send s
 
     robot.respond /omikuji\s+del\s+(\d+)/i, (msg) ->
+        omikuji_memo = load_from_brain()
         target = parseInt(msg.match[1], 10) - 1
         if target >= omikuji_sysdef and target < omikuji_tbl.length
             omikuji_tbl.splice(target, 1)

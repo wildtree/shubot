@@ -95,6 +95,7 @@ module.exports = (robot) ->
         user = msg.message.user.name
         unless user of bd
             msg.send "Usage:\n#{prefix} bio <yyyy-mm-dd>"
+            return
 
         birth = new Date
         birth.setTime(bd[user])

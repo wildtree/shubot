@@ -43,6 +43,16 @@ module.exports = (robot) ->
             omikuji_tbl = omikuji_memo['_list_']
         return omikuji_memo
 
+    purge_old_cache = (hash) ->
+        today = new Date(get_ds())
+        for key, value of hash
+            continue if key.indexOf(':') < 0 
+            a = key.split(':')
+            ds = a[0]
+            kd = new Date(ds)
+            delete hash[key] if kd.getTime() < today.getTime()
+        
+
     robot.hear /今日の運勢/, (msg) ->
         omikuji_memo = load_from_brain()
         ds = get_ds()
@@ -55,6 +65,8 @@ module.exports = (robot) ->
             result  = msg.random omikuji_tbl
             msg.reply " さんの運勢 " + result.word
             omikuji_memo[key] = result.word
+            # purge old cache data
+            purge_old_cache omikuji_memo
             robot.brain.set 'omikuji', omikuji_memo
             robot.brain.save
 

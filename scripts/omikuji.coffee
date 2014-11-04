@@ -24,6 +24,7 @@ omikuji = [
 
 omikuji_sysdef = omikuji.length
 
+omikuji_db_ver = 1 # must be updated when you change db structure
 omikuji_tbl = []
 system_time = new Date("1970-01-01 00:00:00")
 for e in omikuji
@@ -37,36 +38,39 @@ module.exports = (robot) ->
         d = ('00' + now.getDate().toString()).substr(-2, 2)
         return "#{y}-#{m}-#{d}"
 
+    purge_old_data = (omikuji_memo) ->
+        for key, value of omikuji_memo
+            # delete old style cache data from db
+            delete omikuji_memo[key] if /^\d{4}-\d{2}-\d{2}:.*/.test(key)
+        return omikuji_memo
+
     load_from_brain = ->
         omikuji_memo = robot.brain.get('omikuji') or {}
+        ver = if '_ver_' of omikuji_memo then omikuji_memo['_ver_'] else -1
+        omikuji_memo = purge_old_data(omikuji_memo) if ver < omikuji_db_ver
+        omikuji_memo['_ver_'] = omikuji_db_ver
         if '_list_' of omikuji_memo
             omikuji_tbl = omikuji_memo['_list_']
         return omikuji_memo
-
-    purge_old_cache = (hash) ->
-        today = new Date(get_ds())
-        for key, value of hash
-            continue if key.indexOf(':') < 0 
-            a = key.split(':')
-            ds = a[0]
-            kd = new Date(ds)
-            delete hash[key] if kd.getTime() < today.getTime()
-        
 
     robot.hear /今日の運勢/, (msg) ->
         omikuji_memo = load_from_brain()
         ds = get_ds()
         user = msg.message.user.name
-        key = "#{ds}:#{user}"
-        if key of omikuji_memo
+        omikuji_ts = omikuji_memo['_timestamp_'] or {}
+        omikuji_msg = omikuji_memo['_result_'] or {}
+        ld = if user of omikuji_ts then new Date(omikuji_ts[user]) else null 
+        now = new Date(ds)
+        if ld? and ld.getTime() >= now.getTime()
             msg.reply " さん、おみくじは一日一回まででお願いします。"
-            msg.reply " さんの今日(" + ds + ")の運勢は\n" + omikuji_memo[key] + "\nでした。"
+            msg.reply " さんの今日(" + ds + ")の運勢は\n" + omikuji_msg[user] + "\nでした。"
         else
             result  = msg.random omikuji_tbl
             msg.reply " さんの運勢 " + result.word
-            omikuji_memo[key] = result.word
-            # purge old cache data
-            purge_old_cache omikuji_memo
+            omikuji_msg[user] = result.word
+            omikuji_ts[user]  = ds
+            omikuji_memo['_timestamp_'] = omikuji_ts
+            omikuji_memo['_result_'] = omikuji_msg
             robot.brain.set 'omikuji', omikuji_memo
             robot.brain.save
 

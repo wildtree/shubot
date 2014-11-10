@@ -232,7 +232,7 @@ module.exports = (robot) ->
     robot.respond /geo\s+show\s*(\S*)/i, (msg) ->
         db = load_db()
         loc = db._loc_
-        txt = "登録地点情報:\n"
+        txt = "登録地点情報:"
         
         n = 0
         m = 0
@@ -240,7 +240,7 @@ module.exports = (robot) ->
             n++
             continue if /^\S+$/.test(msg.match[1]) and key isnt msg.match[1]
             m++
-            txt += "`#{key}` (#{value.lon}, #{value.lat}) (#{value.created} by #{value.owner})"
+            txt += "\n`#{key}` (#{value.lon}, #{value.lat}) (#{value.created} by #{value.owner})"
             if value.channels.length > 0
                  txt += "\n    ["
                  i = 0

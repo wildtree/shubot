@@ -23,6 +23,8 @@ module.exports = (robot) ->
     cronjob = new cron '0 */11 * * * *', () =>
         get_weather(robot, null)
     cronjob.start()
+    
+    cache = {}
 
     upgrade_db = (db) ->
         return db
@@ -56,7 +58,7 @@ module.exports = (robot) ->
     compare_grade = (r1, r2) ->
         g1 = rain_grade(r1)
         g2 = rain_grade(r2)
-        return g1 isnot g2
+        return g1 isnt g2
 
     get_coordinate = (query, respond) ->
         db = load_db()
@@ -102,13 +104,14 @@ module.exports = (robot) ->
         return new Date("#{y}-#{m}-#{date} #{h}:#{min}")
 
     parse_weather = (wl) ->
+        console.log wl
         gnow = null
-        for w in wl
+        for w in wl.Weather
             gnow = rain_grade(parseFloat w.Rainfall) if w.Type is 'observation'
             if w.Type is 'forecast'
                 g = rain_grade(parseFloat w.Rainfall)
                 d = to_date(w.Date)    
-                if g isnot gnow
+                if g isnt gnow
                     prefix = "#{d.getHours()}:#{d.getMinutes()}ごろ、"
                     if gnow is 0
                         return "#{prefix}#{rgstr[g]}が降り出しそうです。"
@@ -133,12 +136,17 @@ module.exports = (robot) ->
             keys = [place]
 
         while keys.length > 0
-            l1 = keys[0..9]
+            l1 = []
+            n = 0
+            for key in keys
+                n++
+                l1.push(key)
+                break if l1.length is 10
             gs = null
             for k in l1
                 s = "#{loc[k].lon},#{loc[k].lat}"
                 gs = if gs? then "#{gs} #{s}" else s
-            keys.splice(0, 10)
+            keys.splice(0, n)
             gs = encodeURIComponent(gs)
             api = weather_api + "?appid=#{app_key}&coordinates=#{gs}&output=json"
             robot.http(api).get() (err, res, body) ->
@@ -147,9 +155,10 @@ module.exports = (robot) ->
                 return null unless data.ResultInfo.Count > 0
                 i = 0
                 while i < data.ResultInfo.Count
-                    wl = data.Feature[i].Property.WeatherList
-                    msg = parse_weather(wl)
                     l = loc[l1[i]]
+                    wl = data.Feature[i].Property.WeatherList
+                    cache[l] = wl
+                    msg = parse_weather(wl)
                     if respond?
                         msg = "一時間以内には天候の変化はないと思われます。" unless msg?
                         respond.reply "#{l1[i]}地区:#{msg}"

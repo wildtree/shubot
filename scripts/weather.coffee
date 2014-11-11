@@ -20,7 +20,7 @@ geo_coder_api = 'http://geo.search.olp.yahooapis.jp/OpenLocalPlatform/V1/geoCode
 weather_api = 'http://weather.olp.yahooapis.jp/v1/place'
 module.exports = (robot) ->
     # set up cron job
-    cronjob = new cron '0 */11 * * * *', () =>
+    cronjob = new cron '0 1,11,21,31,41,51 * * * *', () =>
         get_weather(robot, null)
     cronjob.start()
     
@@ -82,7 +82,7 @@ module.exports = (robot) ->
             geo = data.Feature[0]
             name = geo.Name
             coordinate = geo.Geometry.Coordinates.split ','
-            row = { lat: coordinate[1], lon: coordinate[0], channels: [], last_forecast: { Rainfall: 0, ChangeAt: 0, RainfallTo: 0, Timestamp: 0 }, owner: user, created: new Date() }
+            row = { lat: coordinate[1], lon: coordinate[0], channels: [], last_forecast: { Rainfall: 0, ChangeAt: 0, RainfallTo: 0, Timestamp: 0, changed: false }, owner: user, created: new Date() }
             renew = if name of loc then true else false
             loc[name] = row
             db['_loc_'] = loc
@@ -103,8 +103,7 @@ module.exports = (robot) ->
         min  = ds.substr(10, 2)
         return new Date("#{y}-#{m}-#{date} #{h}:#{min}")
 
-    parse_weather = (wl) ->
-        console.log wl
+    parse_weather = (wl, loc, nocache) ->
         gnow = null
         for w in wl.Weather
             gnow = rain_grade(parseFloat w.Rainfall) if w.Type is 'observation'
@@ -113,6 +112,11 @@ module.exports = (robot) ->
                 d = to_date(w.Date)    
                 if g isnt gnow
                     prefix = "#{d.getHours()}:#{d.getMinutes()}ごろ、"
+                    unless nocache
+                        loc.last_forecast.changed = true if loc.last_forecast.RainfallTo isnt g or loc.last_forecast.ChangeAt isnt w.Date or loc.last_forecast.Rainfall isnt gnow
+                        loc.last_forecast.Rainfall = gnow
+                        loc.last_forecast.RainfallTo = g
+                        loc.last_forecast.ChangeAt = w.Date
                     if gnow is 0
                         return "#{prefix}#{rgstr[g]}が降り出しそうです。"
                     else
@@ -158,12 +162,14 @@ module.exports = (robot) ->
                     l = loc[l1[i]]
                     wl = data.Feature[i].Property.WeatherList
                     cache[l] = wl
-                    msg = parse_weather(wl)
+                    nocache = respond?
+                    msg = parse_weather(wl, l, nocache)
                     if respond?
                         msg = "一時間以内には天候の変化はないと思われます。" unless msg?
                         respond.reply "#{l1[i]}地区:#{msg}"
                     else
-                        if msg?
+                        if msg? and l.last_forecast.changed
+                            l.last_forecast.changed = false # flag clear
                             channels = l.channels
                             for room in channels
                                 robot.send { room: "#{room}" }, "#{l1[i]}地区:#{msg}"

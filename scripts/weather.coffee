@@ -111,7 +111,7 @@ module.exports = (robot) ->
                 g = rain_grade(parseFloat w.Rainfall)
                 d = to_date(w.Date)    
                 if g isnt gnow
-                    prefix = "#{d.getHours()}:#{d.getMinutes()}ごろ、"
+                    prefix = "#{('00'+d.getHours().toString()).substr(-2,2)}:#{('00'+d.getMinutes().toString()).substr(-2,2)}ごろ、"
                     unless nocache
                         loc.last_forecast.changed = true if loc.last_forecast.RainfallTo isnt g or loc.last_forecast.ChangeAt isnt w.Date or loc.last_forecast.Rainfall isnt gnow
                         loc.last_forecast.Rainfall = gnow

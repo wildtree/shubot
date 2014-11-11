@@ -36,8 +36,8 @@ module.exports = (robot) ->
 
     load_db = ->
         db = robot.brain.get('weather') or {}
-        db['_ver_'] = db_ver unless '_ver_' of db
-        db = upgrade_db(db) if db['_ver_'] < db_ver
+        db._ver_ = db_ver unless '_ver_' of db
+        db = upgrade_db(db) if db._ver_ < db_ver
         save_db db
         return db
 
@@ -183,14 +183,14 @@ module.exports = (robot) ->
                             l.last_forecast.changed = false # flag clear
                             channels = l.channels
                             for room in channels
-                                robot.send { room: "#{room}" }, "#{l1[i]}地区:#{msg}"
+                                robot.send { room: "##{room}" }, "#{l1[i]}地区:#{msg}"
                     i++
                     
             
 
     get_weather_test = (place) ->
         db = load_db
-        loc = db['_loc_']
+        loc = db._loc_
         unless place of loc
             return false
         row = loc[place]

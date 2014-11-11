@@ -7,6 +7,7 @@
 #   hubot geo show [<filter>] - show list of points
 #   hubot geo channel add <channel> to <key> - add a channel to report about key
 #   hubot geo channel del <channel> from <key> - delete a channel from the key
+#   hubot geo alias <alias> as <key> - create `alias` as key
 #   hubot weather me [<key>] - report weather information
 #
 cron = require('cron').CronJob
@@ -39,6 +40,16 @@ module.exports = (robot) ->
         db = upgrade_db(db) if db['_ver_'] < db_ver
         save_db db
         return db
+
+    alias2key = (a) ->
+        db = load_db()
+        loc = db._loc_
+        alias = db._alias_
+
+        return a unless alias?
+        return a if a of loc
+        return alias[a] if a of alias
+        return a
 
     rain_grade = (r) ->
         if 1.0 <= r < 10.0
@@ -216,12 +227,14 @@ module.exports = (robot) ->
 
     robot.respond /weather\s+me\s*(\S*)/i, (msg) ->
         db = load_db()
-        loc = db['_loc_']
-        if msg.match[1]? and msg.match[1] of loc
-            get_weather(robot, msg, msg.match[1])
+        loc = db._loc_
+        a = msg.match[1]
+        k = alias2key(a)
+        if a? and k of loc
+            get_weather(robot, msg, k)
         else
-            if msg.match[1]? and msg.match[1] isnt ""
-                msg.reply "`#{msg.match[1]}`は登録されていません。"
+            if a? and a isnt ""
+                msg.reply "`#{a}`は登録されていません。"
                 return
             get_weather(robot, msg)
 
@@ -230,14 +243,21 @@ module.exports = (robot) ->
 
     robot.respond /geo\s+del\s+(\S+)/i, (msg) ->
         db = load_db()
-        loc = db['_loc_']
+        loc = db._loc_
         name = msg.match[1]
-        unless name of loc
+        key = alias2key(name)
+        unless key of loc
             msg.reply "`#{name}` は、登録されていません。"
             return
-        user = loc[name]['owner']
-        delete loc[name]
-        db['_loc_'] = loc
+        user = loc[key]['owner']
+        delete loc[key]
+        alias = db._alias_
+        if alias?
+            for a, k of alias
+                delete alias[a] if k is key
+            db._alias_ = alias
+        
+        db._loc_ = loc
         save_db db
         msg.reply "`#{name}` は削除されました。"
         unless user is msg.message.user.name
@@ -247,15 +267,25 @@ module.exports = (robot) ->
     robot.respond /geo\s+show\s*(\S*)/i, (msg) ->
         db = load_db()
         loc = db._loc_
+        alias = db._alias_
         txt = "登録地点情報:"
+
+        a = msg.match[1]
+        k = alias2key(a)
         
         n = 0
         m = 0
         for key, value of loc
             n++
-            continue if /^\S+$/.test(msg.match[1]) and key isnt msg.match[1]
+            continue if /^\S+$/.test(a) and key isnt k
             m++
             txt += "\n`#{key}` (#{value.lon}, #{value.lat}) (#{value.created} by #{value.owner})"
+            if alias?
+                 aa = []
+                 for a1, k1 of alias
+                     aa.push "'#{a1}'" if k1 is key
+                 txt += "\n    {#{aa.join(', ')}}" if aa.length > 0
+
             if value.channels.length > 0
                  txt += "\n    ["
                  i = 0
@@ -269,28 +299,55 @@ module.exports = (robot) ->
     robot.respond /geo\s+channel\s+add\s+#?(\S+)\s+to\s+(\S+)/i, (msg) ->
         db = load_db()
         loc = db._loc_
-        unless msg.match[2] of loc
-            msg.reply "`#{msg.match[2]}`は登録されていません。"
+        channel = msg.match[1]
+        alias = msg.match[2]
+        key = alias2key(alias)
+        unless key of loc
+            msg.reply "`#{alias}`は登録されていません。"
             return
-        loc[msg.match[2]].channels.push(msg.match[1]) unless msg.match[1] in loc[msg.match[2]].channels
-        msg.reply "チャネル`##{msg.match[1]}`へ天候の変化を報告します。"
+        loc[key].channels.push(channel) unless channel in loc[key].channels
+        msg.reply "チャネル`##{channel}`へ天候の変化を報告します。"
         db._loc_ = loc
         save_db db
 
     robot.respond /geo\s+channel\s+del\s+#?(\S+)\s+from\s+(\S+)/i, (msg) ->
         db = load_db()
         loc = db._loc_
-        unless msg.match[2] of loc
-            msg.reply "`#{msg.match[2]}`は登録されていません。"
+        channel = msg.match[1]
+        alias = msg.match[2]
+        key = alias2key(alias)
+        unless key of loc
+            msg.reply "`#{alias}`は登録されていません。"
             return
-        unless msg.match[1] in loc[msg.match[2]].channels
-            msg.reply "`#{msg.match[1]}`は登録されていません。"
+        unless channel in loc[key].channels
+            msg.reply "`#{channel}`は登録されていません。"
         i = 0
-        while msg.match[1] in loc[msg.match[2]].channels
-            if loc[msg.match[2]].channels[i] is msg.match[1]
-                loc[msg.match[2]].channels.splice(i, 1)
+        while channel in loc[key].channels
+            if loc[key].channels[i] is channel
+                loc[key].channels.splice(i, 1)
             else
                 i++
-        msg.reply "チャネル`##{msg.match[1]}`へ天候の報告を停止します。"
+        msg.reply "チャネル`##{channel}`へ天候の報告を停止します。"
         db._loc_ = loc
         save_db db
+
+    robot.respond /geo\s+alias\s+(\S+)\s+as\s+(\S+)/i, (msg) ->
+        db = load_db()
+        loc = db._loc_
+        alias = db._alias_ or {}
+        a = msg.match[1]
+        k = msg.match[2]
+
+        if k is "" and a of alias
+            delete alias[a]
+            msg.reply "`#{a}`は削除されました。"
+        else
+            unless k of loc
+                msg.reply "`#{k}`は存在していません。"
+            else
+                alias[a] = k
+                msg.reply "`#{a}`は#{k}のエイリアスとして登録されました。"
+
+        db._alias_ = alias
+        save_db db
+

@@ -2,7 +2,7 @@
 # Description:
 #   parse weather forcast from Yahoo, notify in case it will be rain.
 # Commands:
-#   hubot geo add <query> - add a point
+#   hubot geo add <query> [as <alias>] - add a point
 #   hubot geo del <key> - delete a point
 #   hubot geo show [<filter>] - show list of points
 #   hubot geo channel add <channel> to <key> - add a channel to report about key
@@ -71,7 +71,7 @@ module.exports = (robot) ->
         g2 = rain_grade(r2)
         return g1 isnt g2
 
-    get_coordinate = (query, respond) ->
+    get_coordinate = (query, respond, a = null) ->
         db = load_db()
         loc = db._loc_ or {}
         return query if query of loc # skip 
@@ -100,14 +100,15 @@ module.exports = (robot) ->
             if renew
                 txt = "`#{name}` を (#{coordinate[0]}, #{coordinate[1]})に更新しました。"
             else
+                a = query unless a?
                 txt = "`#{query}` を (#{coordinate[0]}, #{coordinate[1]}) で、`#{name}`として登録しました。"
-                unless name is query
+                unless name is a
                     alias = db._alias_ or {}
-                    if query of alias
-                        txt += "\n`#{query}`を#{alias[query]}のエイリアスから#{name}のエイリアスに変更しました。"
+                    if a of alias
+                        txt += "\n`#{a}`を#{alias[a]}のエイリアスから#{name}のエイリアスに変更しました。"
                     else
-                        txt += "\n`#{query}` を#{name} のエイリアスとして登録しました。"
-                    alias[query] = name
+                        txt += "\n`#{a}` を#{name} のエイリアスとして登録しました。"
+                    alias[a] = name
             respond.reply "#{txt}\n#{data.ResultInfo.Latency} 秒を要しました。"
             save_db db
             return name
@@ -245,8 +246,9 @@ module.exports = (robot) ->
                 return
             get_weather(robot, msg)
 
-    robot.respond /geo\s+add\s+(\S+)/i, (msg) ->
-        get_coordinate(msg.match[1], msg)
+    robot.respond /geo\s+add\s+(\S+)(\s+as\s+)*(\S*)/i, (msg) ->
+        a = if /^$/.test(msg.match[3]) then null else msg.match[3]
+        get_coordinate(msg.match[1], msg, a)
 
     robot.respond /geo\s+del\s+(\S+)/i, (msg) ->
         db = load_db()

@@ -73,7 +73,7 @@ module.exports = (robot) ->
 
     get_coordinate = (query, respond) ->
         db = load_db()
-        loc = db['_loc_'] or {}
+        loc = db._loc_ or {}
         return query if query of loc # skip 
         q = encodeURIComponent(query)
         api = geo_coder_api + "?appid=#{app_key}&query=#{q}&output=json"
@@ -96,13 +96,20 @@ module.exports = (robot) ->
             row = { lat: coordinate[1], lon: coordinate[0], channels: [], last_forecast: { Rainfall: 0, ChangeAt: 0, RainfallTo: 0, Timestamp: 0, changed: false }, owner: user, created: new Date() }
             renew = if name of loc then true else false
             loc[name] = row
-            db['_loc_'] = loc
-            save_db db
+            db._loc_ = loc
             if renew
-                respond.reply "`#{name}` を (#{coordinate[0]}, #{coordinate[1]})に更新しました。"
+                txt = "`#{name}` を (#{coordinate[0]}, #{coordinate[1]})に更新しました。"
             else
-                respond.reply "`#{query}` を (#{coordinate[0]}, #{coordinate[1]}) で、`#{name}`として登録しました。"
-            respond.reply "#{data.ResultInfo.Latency} 秒を要しました。"
+                txt = "`#{query}` を (#{coordinate[0]}, #{coordinate[1]}) で、`#{name}`として登録しました。"
+                unless name is query
+                    alias = db._alias_ or {}
+                    if query of alias
+                        txt += "\n`#{query}`を#{alias[query]}のエイリアスから#{name}のエイリアスに変更しました。"
+                    else
+                        txt += "\n`#{query}` を#{name} のエイリアスとして登録しました。"
+                    alias[query] = name
+            respond.reply "#{txt}\n#{data.ResultInfo.Latency} 秒を要しました。"
+            save_db db
             return name
  
     to_date = (d) ->

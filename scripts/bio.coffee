@@ -3,7 +3,7 @@
 #    Biorythm generator
 #
 # Commands:
-#   hubot bio <birthday> - give a biorythm entry of the day.
+#   hubot bio me <birthday> - give a biorythm entry of the day.
 #
 
 module.exports = (robot) ->
@@ -76,7 +76,7 @@ module.exports = (robot) ->
         str = "さん(#{bio.getBirthdayStr()} 生まれ) のバイオリズム:\n 生後 #{bio.daysPast()} 日目\n 身体#{p}\n 感情#{s}\n 知性#{i}\n"
         return str
         
-    robot.respond /bio (\d{4}[/\-]\d{2}[/\-]\d{2})/i, (msg) ->
+    robot.respond /bio\s+me\s+(\d{4}[/\-]\d{2}[/\-]\d{2})/i, (msg) ->
         bd = robot.brain.get("bio") or {}
         birth = new Date(msg.match[1])
         msg.reply getBiorythm birth
@@ -86,7 +86,7 @@ module.exports = (robot) ->
         robot.brain.set 'bio', bd
         robot.brain.save
 
-    robot.respond /bio\s*$/i, (msg) ->
+    robot.respond /bio\s+me\s*$/i, (msg) ->
         bd = robot.brain.get("bio")
         prefix = robot.alias or robot.name
         unless bd?

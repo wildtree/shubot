@@ -314,8 +314,13 @@ module.exports = (robot) ->
         unless key of loc
             msg.reply "`#{alias}`は登録されていません。"
             return
-        loc[key].channels.push(channel) unless channel in loc[key].channels
-        msg.reply "チャネル`##{channel}`へ天候の変化を報告します。"
+        channels = channel.split(/:/)
+        txt = ""
+        for c in channels
+            loc[key].channels.push(c) unless c in loc[key].channels
+            txt += "\n" unless txt is ""
+            txt += "チャネル`##{c}`へ#{alias}の天候の変化を報告します。"
+        msg.reply txt
         db._loc_ = loc
         save_db db
 
@@ -328,15 +333,22 @@ module.exports = (robot) ->
         unless key of loc
             msg.reply "`#{alias}`は登録されていません。"
             return
-        unless channel in loc[key].channels
-            msg.reply "`#{channel}`は登録されていません。"
-        i = 0
-        while channel in loc[key].channels
-            if loc[key].channels[i] is channel
-                loc[key].channels.splice(i, 1)
-            else
-                i++
-        msg.reply "チャネル`##{channel}`へ天候の報告を停止します。"
+        channels = channel.split(/:/)
+        txt = ""
+        for c in channels
+            unless c in loc[key].channels
+                txt += "\n" unless txt is ""
+                txt "`#{c}`は登録されていません。"
+                continue
+            i = 0
+            while c in loc[key].channels
+                if loc[key].channels[i] is c
+                    loc[key].channels.splice(i, 1)
+                    txt += "\n" unless txt is ""
+                    txt += "チャネル`##{c}`への#{alias}の天候の報告を停止します。"
+                else
+                    i++
+        msg.reply txt unless txt is ""
         db._loc_ = loc
         save_db db
 

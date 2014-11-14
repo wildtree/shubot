@@ -148,6 +148,30 @@ module.exports = (robot) ->
                                 return "#{prefix}雨が弱まり、#{rgstr[g]}になりそうです。"
         return null
 
+    get_weather_sub = (api, robot, respond, list) ->
+        db = load_db()
+        loc = db._loc_
+        robot.http(api).get() (err, res, body) ->
+            return null if err or res.statusCode isnt 200
+            data = JSON.parse(body)
+            return null unless data.ResultInfo.Count > 0
+            i = 0
+            while i < data.ResultInfo.Count
+                l = loc[list[i]]
+                wl = data.Feature[i].Property.WeatherList
+                nocache = respond?
+                msg = parse_weather(wl, l, nocache)
+                if respond?
+                    msg = "一時間以内には天候の変化はないと思われます。" unless msg?
+                    respond.reply "#{list[i]}地区:#{msg}"
+                else
+                    if msg? and l.last_forecast.changed
+                        l.last_forecast.changed = false # flag clear
+                        channels = l.channels
+                        for room in channels
+                            robot.send { room: "##{room}" }, "#{list[i]}地区:#{msg}"
+                i++
+
     get_weather = (robot, respond, place = null) ->
         db = load_db()
         loc = db._loc_
@@ -172,63 +196,7 @@ module.exports = (robot) ->
             keys.splice(0, n)
             gs = encodeURIComponent(gs)
             api = weather_api + "?appid=#{app_key}&coordinates=#{gs}&output=json"
-            robot.http(api).get() (err, res, body) ->
-                return null if err or res.statusCode isnt 200
-                data = JSON.parse(body)
-                return null unless data.ResultInfo.Count > 0
-                i = 0
-                while i < data.ResultInfo.Count
-                    l = loc[l1[i]]
-                    wl = data.Feature[i].Property.WeatherList
-                    cache[l] = wl
-                    nocache = respond?
-                    msg = parse_weather(wl, l, nocache)
-                    if respond?
-                        msg = "一時間以内には天候の変化はないと思われます。" unless msg?
-                        respond.reply "#{l1[i]}地区:#{msg}"
-                    else
-                        if msg? and l.last_forecast.changed
-                            l.last_forecast.changed = false # flag clear
-                            channels = l.channels
-                            for room in channels
-                                robot.send { room: "##{room}" }, "#{l1[i]}地区:#{msg}"
-                    i++
-                    
-            
-
-    get_weather_test = (place) ->
-        db = load_db
-        loc = db._loc_
-        unless place of loc
-            return false
-        row = loc[place]
-        api = weather_api + "?appid=#{app_key}&coordinates=#{row['lon']},#{row['lat']}&output=json"
-        robot.http(api).get() (err, res, body) ->
-            if err
-                return false
-            if res.statusCode isnt 200
-                return false
-            data = JSON.parse(body)
-            unless data.ResultInfo.Count > 0
-                return false
-            wl = data.Feature[0].Property.WeatherList
-            Rainfall = 0
-            ChangeAt = 0
-            RainfallTo = 0
-            for w in wl
-                if w.Type is 'observation'
-                    Rainfall = parseFloat w.Rainfall
-                if w.Type is 'forecast'
-                    r = parseFloat w.Rainfall
-                    if compare_grade(r1, r)
-                        RainfallTo = r
-                        ChangeAt = w.Date
-            if ChangeAt > 0
-                g1 = rain_grade(Rainfall)
-                g2 = rain_grade(RainfallTo)
-                if g1 is 0
-                   robot.send {room: '#sandbox'}, "間もなく"+rgstr[g2]+"が降り出します。"
-                   robot.send {room: "#sandbox"}, "at #{ChangeAt}/#{place}"
+            get_weather_sub(api, robot, respond, l1)
 
     robot.respond /geo\s+me\s+(\S+)/i, (msg) ->
         get_coordinate(msg.match[1], msg)

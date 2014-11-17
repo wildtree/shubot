@@ -78,7 +78,6 @@ module.exports = (robot) ->
         timestamp = new Date()
         for dest in hb
             robot.send { room: "@#{dest}" }, "#{timestamp} done."
-            console.log dest, timestamp
 
     get_coordinate = (query, respond, a = null) ->
         db = load_db()
@@ -250,7 +249,7 @@ module.exports = (robot) ->
         msg.reply "`#{name}` は削除されました。"
         unless user is msg.message.user.name
             # send direct message to owner...
-            return
+            robot.send { room: "@#{user}" }, "`#{name}`が@#{msg.message.user.name}からの要求により削除されました。"
 
     robot.respond /geo\s+show\s*(\S*)/i, (msg) ->
         db = load_db()

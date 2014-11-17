@@ -71,6 +71,15 @@ module.exports = (robot) ->
         g2 = rain_grade(r2)
         return g1 isnt g2
 
+    heart_beat = (robot) ->
+        db = load_db()
+        hb = db._hb_
+        return unless hb?
+        timestamp = new Date()
+        for dest in hb
+            robot.send { room: "@#{dest}" }, "#{timestamp} done."
+            console.log dest, timestamp
+
     get_coordinate = (query, respond, a = null) ->
         db = load_db()
         loc = db._loc_ or {}
@@ -197,6 +206,8 @@ module.exports = (robot) ->
             gs = encodeURIComponent(gs)
             api = weather_api + "?appid=#{app_key}&coordinates=#{gs}&output=json"
             get_weather_sub(api, robot, respond, l1)
+
+        heart_beat(robot) unless respond?
 
     robot.respond /geo\s+me\s+(\S+)/i, (msg) ->
         get_coordinate(msg.match[1], msg)
@@ -339,4 +350,40 @@ module.exports = (robot) ->
 
         db._alias_ = alias
         save_db db
+
+    robot.respond /weather\s+hb\s+start\s+(\S+)/i, (msg) ->
+        target = msg.match[1]
+        db = load_db()
+        hb = db._hb_ or []
+        hb.push(target) unless target in hb
+        msg.reply "#{target}へheartbeatの送信を開始します。"
+        db._hb_ = hb
+        save_db db
+
+    robot.respond /weather\s+hb\s+stop\s+(\S+)/i, (msg) ->
+        target = msg.match[1]
+        db = load_db()
+        hb = db._hb_
+        return unless hb?
+        if target in hb
+            i = 0
+            for p in hb
+                if p is target
+                    hb.splice(i++, 1)
+                    msg.reply "#{target}へのheartbeatの送信を停止します。"
+            db._hb_ = hb
+            save_db db
+
+    robot.respond /weather\s+hb\s+show/i, (msg) ->
+        db = load_db()
+        hb = db._hb_
+        i = 0
+        txt = ""
+        if hb?
+            for p in hb
+                i++
+                txt += "\n" unless txt is ""
+                txt += "#{i}: `#{p}`"
+        txt += "\n" unless txt is ""
+        msg.reply "#{txt}#{i} person(s)"
 

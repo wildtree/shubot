@@ -128,17 +128,23 @@ module.exports = (robot) ->
         date = ds.substr(6, 2)
         h    = ds.substr(8, 2)
         min  = ds.substr(10, 2)
+
         return new Date("#{y}-#{m}-#{date} #{h}:#{min}")
+
+    to_timestring = (d) ->
+        return "#{('00'+d.getHours().toString()).substr(-2,2)}:#{('00'+d.getMinutes().toString()).substr(-2,2)}"
 
     parse_weather = (wl, loc, nocache) ->
         gnow = null
+        norain = true
         for w in wl.Weather
             gnow = rain_grade(parseFloat w.Rainfall) if w.Type is 'observation'
             if w.Type is 'forecast'
                 g = rain_grade(parseFloat w.Rainfall)
                 d = to_date(w.Date)    
+                norain = false if g > 0
                 if g isnt gnow
-                    prefix = "#{('00'+d.getHours().toString()).substr(-2,2)}:#{('00'+d.getMinutes().toString()).substr(-2,2)}ごろ、"
+                    prefix = "#{to_timestring(d)}ごろ、"
                     unless nocache
                         loc.last_forecast.changed = true if loc.last_forecast.RainfallTo isnt g or loc.last_forecast.ChangeAt isnt w.Date or loc.last_forecast.Rainfall isnt gnow
                         loc.last_forecast.Rainfall = gnow
@@ -154,6 +160,23 @@ module.exports = (robot) ->
                                 return "#{prefix}雨脚が強まり、#{rgstr[g]}になりそうです。"
                             else
                                 return "#{prefix}雨が弱まり、#{rgstr[g]}になりそうです。"
+        unless nocache
+            fd = to_date loc.last_forecast.ChangeAt
+            nd = new Date()
+            if gnow? and fd > nd
+                if gnow is 0 and norain and loc.last_forecast.RainfallTo > 0
+                    loc.last_forecast.RainfallTo = 0
+                    loc.last_forecast.Rainfall = 0
+                    loc.last_forecast.ChangeAt = 0
+                    return "#{to_timestring(fd)}ごろの降雨予報は解除されました。"
+                if loc.last_forecast.RainfallTo is 0
+                    for w in wl.Weather
+                        wd = to_date w.Date
+                        if wd is fd and rain_grade(parseFloat w.Rainfall) > 0
+                            loc.last_forecast.RainfallTo = 0
+                            loc.last_forecast.Rainfall = gnow
+                            loc.last_forecast.ChangeAt = 0
+                            return "#{to_timestring(fd)}ごろ雨が止む予報は解除されました。"
         return null
 
     get_weather_sub = (api, robot, respond, list) ->

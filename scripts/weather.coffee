@@ -335,7 +335,7 @@ module.exports = (robot) ->
         loc = db._loc_
         alias = db._alias_ or {}
         a = msg.match[1]
-        k = msg.match[2]
+        k = alias2key msg.match[2]
 
         if k is "" and a of alias
             delete alias[a]

@@ -7,6 +7,8 @@
 #
 
 module.exports = (robot) ->
+
+    usage = "Usage:\n#{prefix} bio me <yyyy-mm-dd>"
     class Bio
         _days = 0
         constructor: (b) ->
@@ -90,11 +92,11 @@ module.exports = (robot) ->
         bd = robot.brain.get("bio")
         prefix = robot.alias or robot.name
         unless bd?
-            msg.send "Usage:\n#{prefix} bio <yyyy-mm-dd>"
+            msg.reply usage
             return
         user = msg.message.user.name
         unless user of bd
-            msg.send "Usage:\n#{prefix} bio <yyyy-mm-dd>"
+            msg.reply usage
             return
 
         birth = new Date

@@ -8,7 +8,8 @@
 
 module.exports = (robot) ->
 
-    usage = "Usage:\n#{prefix} bio me <yyyy-mm-dd>"
+    robot_name = robot.alias or robot.name
+    usage = "Usage:\n#{robot_name} bio me <yyyy-mm-dd>"
     class Bio
         _days = 0
         constructor: (b) ->
@@ -90,7 +91,6 @@ module.exports = (robot) ->
 
     robot.respond /bio\s+me\s*$/i, (msg) ->
         bd = robot.brain.get("bio")
-        prefix = robot.alias or robot.name
         unless bd?
             msg.reply usage
             return

@@ -192,15 +192,24 @@ module.exports = (robot) ->
                 wl = data.Feature[i].Property.WeatherList
                 nocache = respond?
                 msg = parse_weather(wl, l, nocache)
+                area = "#{list[i]}地区"
+                aliases = db._alias_
+                if aliases?
+                    as = []
+                    for al, key of aliases
+                        if key is list[i]
+                            as.push(al)
+                    if as.length > 0
+                        area = "`#{as.join('/')}`(#{list[i]})地区"
                 if respond?
                     msg = "一時間以内には天候の変化はないと思われます。" unless msg?
-                    respond.reply "#{list[i]}地区:#{msg}"
+                    respond.reply "#{area}:#{msg}"
                 else
                     if msg? and l.last_forecast.changed
                         l.last_forecast.changed = false # flag clear
                         channels = l.channels
                         for room in channels
-                            robot.send { room: "##{room}" }, "#{list[i]}地区:#{msg}"
+                            robot.send { room: "##{room}" }, "#{area}:#{msg}"
                 i++
 
     get_weather = (robot, respond, place = null) ->

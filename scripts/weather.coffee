@@ -89,14 +89,14 @@ module.exports = (robot) ->
         user = respond.message.user.name
         robot.http(api).get() (err, res, body) ->
             if err
-                 robot.send {room: "#sandbox"}, "YOLP APIにアクセスできません:- #{err}"
+                 robot.send {room: "#sandbox"}, "YOLP APIにアクセスできないワン:- #{err}"
                  return null
             unless res.statusCode is 200
-                 robot.send {room: '#sandbox'}, "YOLP APIがエラーを返しました。Status code: #{res.statusCode}"
+                 robot.send {room: '#sandbox'}, "YOLP APIがエラーを返したワン。Status code: #{res.statusCode}"
                  return null
             data = JSON.parse(body)
             unless data.ResultInfo.Count > 0
-                robot.send {room: '#sandbox'}, "`#{query}`は見つかりませんでした。"
+                robot.send {room: '#sandbox'}, "`#{query}`は見つからなかったワン。"
                 return null
             geo = data.Feature[0]
             name = geo.Name
@@ -106,18 +106,18 @@ module.exports = (robot) ->
             loc[name] = row
             db._loc_ = loc
             if renew
-                txt = "`#{name}` を (#{coordinate[0]}, #{coordinate[1]})に更新しました。"
+                txt = "`#{name}` を (#{coordinate[0]}, #{coordinate[1]})に更新したワン。"
             else
                 a = query unless a?
-                txt = "`#{query}` を (#{coordinate[0]}, #{coordinate[1]}) で、`#{name}`として登録しました。"
+                txt = "`#{query}` を (#{coordinate[0]}, #{coordinate[1]}) で、`#{name}`として登録したワン。"
                 unless name is a
                     alias = db._alias_ or {}
                     if a of alias
-                        txt += "\n`#{a}`を#{alias[a]}のエイリアスから#{name}のエイリアスに変更しました。"
+                        txt += "\n`#{a}`を#{alias[a]}のエイリアスから#{name}のエイリアスに変更したワン。"
                     else
-                        txt += "\n`#{a}` を#{name} のエイリアスとして登録しました。"
+                        txt += "\n`#{a}` を#{name} のエイリアスとして登録したワン。"
                     alias[a] = name
-            respond.reply "#{txt}\n#{data.ResultInfo.Latency} 秒を要しました。"
+            respond.reply "#{txt}\n#{data.ResultInfo.Latency} 秒を要したワン。"
             save_db db
             return name
  
@@ -151,15 +151,15 @@ module.exports = (robot) ->
                         loc.last_forecast.RainfallTo = g
                         loc.last_forecast.ChangeAt = w.Date
                     if gnow is 0
-                        return "#{prefix}#{rgstr[g]}が降り出しそうです。"
+                        return "#{prefix}#{rgstr[g]}が降り出しそうだワン。"
                     else
                         if g is 0
-                            return "現在の#{rgstr[gnow]}は、#{prefix}止みそうです。"
+                            return "現在の#{rgstr[gnow]}は、#{prefix}止みそうだワン。"
                         else
                             if g > gnow
-                                return "#{prefix}雨脚が強まり、#{rgstr[g]}になりそうです。"
+                                return "#{prefix}雨脚が強まり、#{rgstr[g]}になりそうだワン。"
                             else
-                                return "#{prefix}雨が弱まり、#{rgstr[g]}になりそうです。"
+                                return "#{prefix}雨が弱まり、#{rgstr[g]}になりそうだワン。"
         unless nocache
             fd = to_date loc.last_forecast.ChangeAt
             nd = new Date()
@@ -168,7 +168,7 @@ module.exports = (robot) ->
                     loc.last_forecast.RainfallTo = 0
                     loc.last_forecast.Rainfall = 0
                     loc.last_forecast.ChangeAt = 0
-                    return "#{to_timestring(fd)}ごろの降雨予報は解除されました。"
+                    return "#{to_timestring(fd)}ごろの降雨予報は解除されたワン。"
                 if loc.last_forecast.RainfallTo is 0
                     for w in wl.Weather
                         wd = to_date w.Date
@@ -176,7 +176,7 @@ module.exports = (robot) ->
                             loc.last_forecast.RainfallTo = 0
                             loc.last_forecast.Rainfall = gnow
                             loc.last_forecast.ChangeAt = 0
-                            return "#{to_timestring(fd)}ごろ雨が止む予報は解除されました。"
+                            return "#{to_timestring(fd)}ごろ雨が止む予報は解除されたワン。"
         return null
 
     get_weather_sub = (api, robot, respond, list) ->
@@ -202,7 +202,7 @@ module.exports = (robot) ->
                     if as.length > 0
                         area = "`#{as.join('/')}`(#{list[i]})地区"
                 if respond?
-                    msg = "一時間以内には天候の変化はないと思われます。" unless msg?
+                    msg = "一時間以内には天候の変化はなさそうだワン。" unless msg?
                     respond.reply "#{area}:#{msg}"
                 else
                     if msg? and l.last_forecast.changed
@@ -252,7 +252,7 @@ module.exports = (robot) ->
             get_weather(robot, msg, k)
         else
             if a? and a isnt ""
-                msg.reply "`#{a}`は登録されていません。"
+                msg.reply "`#{a}`は登録されていないワン。"
                 return
             get_weather(robot, msg)
 
@@ -266,7 +266,7 @@ module.exports = (robot) ->
         name = msg.match[1]
         key = alias2key(name)
         unless key of loc
-            msg.reply "`#{name}` は、登録されていません。"
+            msg.reply "`#{name}` は、登録されていないワン。"
             return
         user = loc[key]['owner']
         delete loc[key]
@@ -278,10 +278,10 @@ module.exports = (robot) ->
         
         db._loc_ = loc
         save_db db
-        msg.reply "`#{name}` は削除されました。"
+        msg.reply "`#{name}` は削除されたワン。"
         unless user is msg.message.user.name
             # send direct message to owner...
-            robot.send { room: "@#{user}" }, "`#{name}`が@#{msg.message.user.name}からの要求により削除されました。"
+            robot.send { room: "@#{user}" }, "`#{name}`が@#{msg.message.user.name}からの要求により削除されたワン。"
 
     robot.respond /geo\s+show\s*(\S*)/i, (msg) ->
         db = load_db()
@@ -322,14 +322,14 @@ module.exports = (robot) ->
         alias = msg.match[2]
         key = alias2key(alias)
         unless key of loc
-            msg.reply "`#{alias}`は登録されていません。"
+            msg.reply "`#{alias}`は登録されていないワン。"
             return
         channels = channel.split(/:/)
         txt = ""
         for c in channels
             loc[key].channels.push(c) unless c in loc[key].channels
             txt += "\n" unless txt is ""
-            txt += "チャネル`##{c}`へ#{alias}の天候の変化を報告します。"
+            txt += "チャネル`##{c}`へ#{alias}の天候の変化を報告するワン。"
         msg.reply txt
         db._loc_ = loc
         save_db db
@@ -341,21 +341,21 @@ module.exports = (robot) ->
         alias = msg.match[2]
         key = alias2key(alias)
         unless key of loc
-            msg.reply "`#{alias}`は登録されていません。"
+            msg.reply "`#{alias}`は登録されていないワン。"
             return
         channels = channel.split(/:/)
         txt = ""
         for c in channels
             unless c in loc[key].channels
                 txt += "\n" unless txt is ""
-                txt "`#{c}`は登録されていません。"
+                txt "`#{c}`は登録されていないワン。"
                 continue
             i = 0
             while c in loc[key].channels
                 if loc[key].channels[i] is c
                     loc[key].channels.splice(i, 1)
                     txt += "\n" unless txt is ""
-                    txt += "チャネル`##{c}`への#{alias}の天候の報告を停止します。"
+                    txt += "チャネル`##{c}`への#{alias}の天候の報告を停止したワン。"
                 else
                     i++
         msg.reply txt unless txt is ""
@@ -371,13 +371,13 @@ module.exports = (robot) ->
 
         if k is "" and a of alias
             delete alias[a]
-            msg.reply "`#{a}`は削除されました。"
+            msg.reply "`#{a}`は削除されたワン。"
         else
             unless k of loc
-                msg.reply "`#{k}`は存在していません。"
+                msg.reply "`#{k}`は存在していないワン。"
             else
                 alias[a] = k
-                msg.reply "`#{a}`は#{k}のエイリアスとして登録されました。"
+                msg.reply "`#{a}`は#{k}のエイリアスとして登録されたワン。"
 
         db._alias_ = alias
         save_db db
@@ -387,7 +387,7 @@ module.exports = (robot) ->
         db = load_db()
         hb = db._hb_ or []
         hb.push(target) unless target in hb
-        msg.reply "#{target}へheartbeatの送信を開始します。"
+        msg.reply "#{target}へheartbeatの送信を開始するワン。"
         db._hb_ = hb
         save_db db
 
@@ -401,7 +401,7 @@ module.exports = (robot) ->
             for p in hb
                 if p is target
                     hb.splice(i++, 1)
-                    msg.reply "#{target}へのheartbeatの送信を停止します。"
+                    msg.reply "#{target}へのheartbeatの送信を停止するワン。"
             db._hb_ = hb
             save_db db
 

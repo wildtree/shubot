@@ -62,8 +62,8 @@ module.exports = (robot) ->
         ld = if user of omikuji_ts then new Date(omikuji_ts[user]) else null 
         now = new Date(ds)
         if ld? and ld.getTime() >= now.getTime()
-            msg.reply " さん、おみくじは一日一回まででお願いします。"
-            msg.reply " さんの今日(" + ds + ")の運勢は\n" + omikuji_msg[user] + "\nでした。"
+            msg.reply " さん、おみくじは一日一回まででお願いしたいワン。"
+            msg.reply " さんの今日(" + ds + ")の運勢は\n" + omikuji_msg[user] + "\nだったワン。"
         else
             result  = msg.random omikuji_tbl
             msg.reply " さんの運勢 " + result.word
@@ -86,7 +86,7 @@ module.exports = (robot) ->
             robot.brain.set 'omikuji', omikuji_memo
             robot.brain.save
         else
-            msg.send "\"#{found.word}\" は定義済みです。"
+            msg.send "\"#{found.word}\" は定義済みだワン。"
 
     robot.respond /omikuji\s+dump/i, (msg) ->
         omikuji_memo = load_from_brain()
@@ -105,8 +105,8 @@ module.exports = (robot) ->
         if target >= omikuji_sysdef and target < omikuji_tbl.length
             omikuji_tbl.splice(target, 1)
         else
-            err = "#{target + 1} is not existing."
-            err = "#{target + 1} is defined by system." if target < omikuji_sysdef
+            err = "#{target + 1} は見つからないワン。"
+            err = "#{target + 1} はシステム定義なので削除できないワン。" if target < omikuji_sysdef
             msg.send err
 
 

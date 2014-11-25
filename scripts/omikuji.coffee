@@ -31,6 +31,8 @@ for e in omikuji
     omikuji_tbl.push({word: e, owner: 'system', time: system_time })
 
 module.exports = (robot) ->
+
+    pero = " △△\n´・ω・`"
     get_ds = ->
         now = new Date()
         y = ('0000' + now.getFullYear().toString()).substr(-4, 4)
@@ -63,10 +65,10 @@ module.exports = (robot) ->
         now = new Date(ds)
         if ld? and ld.getTime() >= now.getTime()
             msg.reply " さん、おみくじは一日一回まででお願いしたいワン。"
-            msg.reply " さんの今日(" + ds + ")の運勢は\n" + omikuji_msg[user] + "\nだったワン。"
+            msg.reply " さんの今日(" + ds + ")の運勢は\n#{pero}" + omikuji_msg[user] + "\nだったワン。"
         else
             result  = msg.random omikuji_tbl
-            msg.reply " さんの運勢 " + result.word
+            msg.reply " さんの運勢\n#{pero}" + result.word
             omikuji_msg[user] = result.word
             omikuji_ts[user]  = ds
             omikuji_memo['_timestamp_'] = omikuji_ts
@@ -88,7 +90,7 @@ module.exports = (robot) ->
         else
             msg.send "\"#{found.word}\" は定義済みだワン。"
 
-    robot.respond /omikuji\s+dump/i, (msg) ->
+    robot.respond /omikuji\s+(dump|show|list)/i, (msg) ->
         omikuji_memo = load_from_brain()
         s = "おみくじ候補:\n"
         i = 0

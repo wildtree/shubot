@@ -33,16 +33,16 @@ module.exports = (robot) ->
             return ("   " + Math.round(100 * Math.sin(2 * Math.PI * _days / frac)).toString()).substr(-4, 4)
 
         _isDanger = (frac) ->
-            return Math.abs(_getValue(frac)) < 15
+            return Math.abs(_getValue(frac)) < 7
 
         _isUp = (frac) ->
             return Math.cos(2 * Math.PI * _days / frac) > 0
 
         _isGood = (frac) ->
-            return _getValue(frac) > 85
+            return _getValue(frac) > 93
 
         _isBad = (frac) ->
-            return _getValue(frac) < -85
+            return _getValue(frac) < -93
 
         p: ->
             return _getValue(23)

@@ -1,1 +1,1 @@
-web: bin/hubot -a campfire -n shubot --adapter slack
+web: bin/hubot -a campfire -n pero --adapter xmpp

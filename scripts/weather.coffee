@@ -14,6 +14,7 @@ cron = require('cron').CronJob
 
 app_key = process.env.YOLP_API_KEY
 db_ver = 1
+domain = '@conference.ingress-shonan.xmpp.slack.com'
 
 rgstr  = [ '', '弱い雨', 'やや強い雨', '強い雨', '激しい雨', '非常に激しい雨', '猛烈な雨']
 
@@ -77,7 +78,8 @@ module.exports = (robot) ->
         return unless hb?
         timestamp = new Date()
         for dest in hb
-            robot.send { room: "@#{dest}" }, "#{timestamp} done."
+            # robot.send { room: "@#{dest}" }, "#{timestamp} done."
+            robot.send { room: "#{dest}#{domain}" }, "#{timestamp} done."
 
     get_coordinate = (query, respond, a = null) ->
         db = load_db()
@@ -89,14 +91,16 @@ module.exports = (robot) ->
         user = respond.message.user.name
         robot.http(api).get() (err, res, body) ->
             if err
-                 robot.send {room: "#sandbox"}, "YOLP APIにアクセスできないワン:- #{err}"
+                 # robot.send {room: "#sandbox"}, "YOLP APIにアクセスできないワン:- #{err}"
+                 robot.send {room: "sandbox#{domain}"}, "YOLP APIにアクセスできないワン:- #{err}"
                  return null
             unless res.statusCode is 200
-                 robot.send {room: '#sandbox'}, "YOLP APIがエラーを返したワン。Status code: #{res.statusCode}"
+                 # robot.send {room: '#sandbox'}, "YOLP APIがエラーを返したワン。Status code: #{res.statusCode}"
+                 robot.send {room: "sandbox#{domain}"}, "YOLP APIがエラーを返したワン。Status code: #{res.statusCode}"
                  return null
             data = JSON.parse(body)
             unless data.ResultInfo.Count > 0
-                robot.send {room: '#sandbox'}, "`#{query}`は見つからなかったワン。"
+                robot.send {room: "sandbox#{domain}"}, "`#{query}`は見つからなかったワン。"
                 return null
             geo = data.Feature[0]
             name = geo.Name
@@ -209,7 +213,7 @@ module.exports = (robot) ->
                         l.last_forecast.changed = false # flag clear
                         channels = l.channels
                         for room in channels
-                            robot.send { room: "##{room}" }, "#{area}:#{msg}"
+                            robot.send { room: "#{room}#{domain}" }, "#{area}:#{msg}"
                 i++
 
     get_weather = (robot, respond, place = null) ->
@@ -281,7 +285,7 @@ module.exports = (robot) ->
         msg.reply "`#{name}` は削除されたワン。"
         unless user is msg.message.user.name
             # send direct message to owner...
-            robot.send { room: "@#{user}" }, "`#{name}`が@#{msg.message.user.name}からの要求により削除されたワン。"
+            robot.send { room: "#{user}#{domain}" }, "`#{name}`が@#{msg.message.user.name}からの要求により削除されたワン。"
 
     robot.respond /geo\s+show\s*(\S*)/i, (msg) ->
         db = load_db()

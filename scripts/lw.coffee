@@ -12,7 +12,7 @@ api = 'http://weather.livedoor.com/forecast/webservice/json/v1?city='
 
 module.exports = (robot) ->
     point = {}
-    load_points = ->
+    load_points = (msg = null) ->
         robot.http(rss).get() (err, res, body) ->
             if err
                 return null
@@ -32,10 +32,11 @@ module.exports = (robot) ->
                         cdata = city['$']
                         key = cdata.title
                         point[key] = cdata.id
+            msg.reply "#{Object.keys(point).length}地点のデータを更新したワン。" if msg?
 
     load_points()
     robot.respond /lw\s+update/i, (msg) ->
-        load_points()
+        load_points msg
 
     robot.respond /lw\s+me\s+(\S+)/i, (msg) ->
         key = msg.match[1]

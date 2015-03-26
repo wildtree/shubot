@@ -141,13 +141,14 @@ module.exports = (robot) ->
     parse_weather = (wl, loc, nocache) ->
         gnow = null
         norain = true
+        nd = new Date()
         for w in wl.Weather
             gnow = rain_grade(parseFloat w.Rainfall) if w.Type is 'observation'
             if w.Type is 'forecast'
                 g = rain_grade(parseFloat w.Rainfall)
                 d = to_date(w.Date)    
                 norain = false if g > 0
-                if g isnt gnow
+                if g isnt gnow and nd < d
                     prefix = "#{to_timestring(d)}ごろ、"
                     unless nocache
                         loc.last_forecast.changed = true if loc.last_forecast.RainfallTo isnt g or loc.last_forecast.ChangeAt isnt w.Date or loc.last_forecast.Rainfall isnt gnow
@@ -166,7 +167,6 @@ module.exports = (robot) ->
                                 return "#{prefix}雨が弱まり、#{rgstr[g]}になりそうだワン。"
         unless nocache
             fd = to_date loc.last_forecast.ChangeAt
-            nd = new Date()
             if gnow? and fd > nd
                 if gnow is 0 and norain and loc.last_forecast.RainfallTo > 0
                     loc.last_forecast.RainfallTo = 0

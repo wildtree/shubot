@@ -41,8 +41,8 @@ module.exports = (robot) ->
             passcode_tbl = passcode_db['_list_']
         return passcode_db
 
-    robot.respond /passcode\s+set\s+(\S+)\s*$/i, (msg) ->
-        pd = load_from_brain()
+    robot.respond /passcode\s+add\s+(\S+)\s*$/i, (msg) ->
+        passcode_db = load_from_brain()
         new_passcode = msg.match[1]
         found = null
         for p in passcode_tbl
@@ -56,6 +56,27 @@ module.exports = (robot) ->
             msg.send "\"#{found.passcode}\" は定義済みだワン。"
 
     robot.respond /passcode\s+me\s*$/i, (msg) ->
-        pd = load_from_brain()
+        passcode_db = load_from_brain()
         for p in passcode_tbl
             msg.send p.passcode
+
+    robot.respond /passcode\s+del\s+(\S+)\s*$/i, (msg) ->
+        passcode_db = load_from_brain()
+        passcode_to_del = msg.match[1]
+        i = 0
+        nf = true
+        for p in passcode_tbl
+            if p.passcode is passcode_to_del
+                if p.owner is 'system'
+                    msg.reply "\"#{p.passcode}\"は削除出来ないワン。"
+                    nf = false
+                    continue
+                passcode_tbl.splice(i, 1)
+                msg.reply "\"#{p.passcode}\"を削除したワン。"
+                passcode_db._list_ = passcode_tbl
+                robot.brain.set 'passcode', passcode_db
+                robot.brain.save
+                return
+            i++
+        msg.reply "\"#{passcode_to_del}\"は見つからないワン。" if nf
+      

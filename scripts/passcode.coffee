@@ -17,6 +17,9 @@ permanent_list = [
     'green3ou25jt4'
     'evolve5uu33zd4'
     'jarvis5ye63mv9'
+    'roland8cx62mk4'
+    'johnson3ba26qb2'
+    'Moyer5pp56fg2'
 ]
 passcode_tbl = []
 passcode_db_ver = 1
